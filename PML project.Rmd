@@ -1,0 +1,67 @@
+---
+title: "prediction assignment"
+author: "Xiao"
+date: "February 4, 2016"
+output: html_document
+---
+
+In this project, my goalis to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants and predict the manner in which they did the exercise.
+
+---
+1.Download data and read in.
+```{r, eval = FALSE}
+# Download and read-in data.
+urltraining<-("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv")
+download.file(urltraining,"training.csv")
+urltesting<-("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv")
+download.file(urltesting,"testing.csv")
+raindata <- read.csv("training.csv")
+testdata <- read.csv("testing.csv")
+```
+
+2. Clean data 
+```{r,eval=FALSE}
+#Clean the testdata and remove NAs.
+testvalid<-testdata[,colSums(is.na(testdata))!=nrow(testdata)]
+
+#Keep "classe" variable
+n <- c(names(testvalid),"classe")
+my1 <- names(traindata) %in% n
+train <- traindata[my1]
+```
+The new train and test set will only contain 60 valid variables.
+
+3.Create data partition.
+```{r,eval=FALSE}
+library(caret)
+set.seed(60)
+inTrain <- createDataPartition(traindata$classe, list = FALSE,p=0.7)
+training <- traindata[inTrain,]
+testing <- traindata[-inTrain,]
+```
+
+4.I will train four model include:Random Forests,GBM, Tress and Linear.
+```{r,eval=FALSE}
+#Train several models to obtain accurary: fit1 Random Forests; fit2 GbM; fit3 Trees; fit4 linear;
+set.seed(61)
+ fit1 <- train(classe~., data=training, trControl = trainControl(method="repeatedcv") ,preProcess=c("center","scale","pca"),method="rf")
+predt1 <- predict(fit1,testing)
+confusionMatrix(predt1,reference=testing$classe)
+set.seed(62)
+fit2 <- train(classe~., data=training, trControl = trainControl(method="repeatedcv") ,preProcess=c("center","scale","pca"),method="gbm")
+predt2 <- predict(fit2,testing)
+confusionMatrix(predt2,reference=testing$classe)
+set.seed(63)
+fit3 <-train(classe~., data=training, trControl = trainControl(method="repeatedcv") ,preProcess=c("center","scale","pca"),method="rpart")
+predt3 <- predict(fit3,testing)
+confusionMatrix(predt3,reference=testing$classe)
+set.seed(64)
+fit4 <- train(classe~., data=training, trControl = trainControl(method="repeatedcv") ,preProcess=c("center","scale","pca"),method="lda")
+predt4 <- predict(fit4,testing)
+confusionMatrix(predt4,reference=testing$classe)
+```
+By cross-validation, the Accuracy of RF model is the highest with 0.9873 Accuracy. Then we choose Random Forests as our final model.
+```{r,eval=FALSE}
+predict(fit1,testvalid)
+```
+

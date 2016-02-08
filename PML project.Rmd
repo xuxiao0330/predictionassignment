@@ -11,7 +11,7 @@ In this project, my goal is to use data from accelerometers on the belt, forearm
 More information is available from the website. 
 
 ---
-1.Download data and read in.
+Download data and read in.
 ```{r, eval = FALSE}
 # Download and read it in data.
 urltraining<-("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv")
@@ -22,7 +22,7 @@ traindata <- read.csv("training.csv")
 testdata <- read.csv("testing.csv")
 ```
 
-2. Clean data. 
+Clean data. 
 In this part, I assume the categories with NAs in test data should not be used to make predictions, and exclude these variables when fitting model with train data. I also exclude X and user_name which I think only as labels, which have nothing to do with model fitting as well.
 ```{r,eval=FALSE}
 #Clean the testdata and remove NAs.
@@ -37,7 +37,7 @@ traindata <- traindata[c(-1,-2)]
 ```
 The new train and test set will only contain 60 valid variables.
 
-3.Create data partition for cross-validation, by setting partition level at 0.7.
+Create data partition for cross-validation, by setting partition level at 0.7.
 ```{r,eval=FALSE}
 library(caret)
 set.seed(60)
@@ -46,7 +46,7 @@ training <- traindata[inTrain,]
 testing <- traindata[-inTrain,]
 ```
 
-4.I will train four model include:Random Forests,GBM, Trees and Linear, using defult 10-fold repeated cv method and pre-processing using center, scale and pca analysis. I will select the highest model with accuracy as my final prediction model.
+I will train four model include:Random Forests,GBM, Trees and Linear, using defult 10-fold repeated cv method and pre-processing using center, scale and pca analysis. I will select the highest model with accuracy as my final prediction model.
 ```{r,eval=FALSE}
 #Train several models to obtain accurary: fit1 Random Forests; fit2 GbM; fit3 Trees; fit4 linear;
 set.seed(61)
@@ -62,7 +62,8 @@ set.seed(64)
 fit4 <- train(classe~., data=training, trControl = trainControl(method="repeatedcv") ,preProcess=c("center","scale","pca"),method="lda")
 predt4 <- predict(fit4,testing)
 ```
-5. Summarize the previous result
+
+Summarize the previous result
 ```{r,eval=FALSE}
 p1<-confusionMatrix(predt1,reference=testing$classe)
 p2<-confusionMatrix(predt2,reference=testing$classe)
@@ -88,7 +89,7 @@ Linear Model <- 0.6965166
 
 By cross-validation, the Accuracy of RF model is the highest with 0.9813 Accuracy. Thus we choose Random Forests as our final model.
 
-6. Make final predictions.
+Make final predictions.
 
 Use the final model to make final predictions on testdata with 20 scenarios.
 ```{r,eval=FALSE}

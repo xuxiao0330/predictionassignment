@@ -1,37 +1,43 @@
 ---
-title: "prediction assignment"
+title: "Practical Machine Learning Project"
 author: "Xiao"
 date: "February 4, 2016"
-output: html_document
+output: 
+  html_document: 
+    keep_md: yes
 ---
 
-In this project, my goalis to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants and predict the manner in which they did the exercise.
+In this project, my goal is to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants and predict the manner in which they did the exercise. The data for this project comes from this source: http://groupware.les.inf.puc-rio.br/har
+More information is available from the website. 
 
 ---
 1.Download data and read in.
 ```{r, eval = FALSE}
-# Download and read-in data.
+# Download and read it in data.
 urltraining<-("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv")
 download.file(urltraining,"training.csv")
 urltesting<-("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv")
 download.file(urltesting,"testing.csv")
-raindata <- read.csv("training.csv")
+traindata <- read.csv("training.csv")
 testdata <- read.csv("testing.csv")
 ```
 
-2. Clean data 
+2. Clean data. 
+In this part, I assume the categories with NAs in test data should not be used to make predictions, and exclude these variables when fitting model with train data. I also exclude X and user_name which I think only as labels, which have nothing to do with model fitting as well.
 ```{r,eval=FALSE}
 #Clean the testdata and remove NAs.
-testvalid<-testdata[,colSums(is.na(testdata))!=nrow(testdata)]
+testdata<-testdata[,colSums(is.na(testdata))!=nrow(testdata)]
 
 #Keep "classe" variable
-n <- c(names(testvalid),"classe")
+n <- c(names(testdata),"classe")
 my1 <- names(traindata) %in% n
-train <- traindata[my1]
+traindata <- traindata[my1]
+#Remove X and user_name variable, which I supposed to have nothing to do with prediction.
+traindata <- traindata[c(-1,-2)]
 ```
 The new train and test set will only contain 60 valid variables.
 
-3.Create data partition.
+3.Create data partition for cross-validation, by setting partition level at 0.7.
 ```{r,eval=FALSE}
 library(caret)
 set.seed(60)
@@ -40,28 +46,53 @@ training <- traindata[inTrain,]
 testing <- traindata[-inTrain,]
 ```
 
-4.I will train four model include:Random Forests,GBM, Tress and Linear.
+4.I will train four model include:Random Forests,GBM, Trees and Linear, using defult 10-fold repeated cv method and pre-processing using center, scale and pca analysis. I will select the highest model with accuracy as my final prediction model.
 ```{r,eval=FALSE}
 #Train several models to obtain accurary: fit1 Random Forests; fit2 GbM; fit3 Trees; fit4 linear;
 set.seed(61)
  fit1 <- train(classe~., data=training, trControl = trainControl(method="repeatedcv") ,preProcess=c("center","scale","pca"),method="rf")
-predt1 <- predict(fit1,testing)
-confusionMatrix(predt1,reference=testing$classe)
+ predt1 <- predict(fit1,testing)
 set.seed(62)
 fit2 <- train(classe~., data=training, trControl = trainControl(method="repeatedcv") ,preProcess=c("center","scale","pca"),method="gbm")
 predt2 <- predict(fit2,testing)
-confusionMatrix(predt2,reference=testing$classe)
 set.seed(63)
 fit3 <-train(classe~., data=training, trControl = trainControl(method="repeatedcv") ,preProcess=c("center","scale","pca"),method="rpart")
 predt3 <- predict(fit3,testing)
-confusionMatrix(predt3,reference=testing$classe)
 set.seed(64)
 fit4 <- train(classe~., data=training, trControl = trainControl(method="repeatedcv") ,preProcess=c("center","scale","pca"),method="lda")
 predt4 <- predict(fit4,testing)
-confusionMatrix(predt4,reference=testing$classe)
 ```
-By cross-validation, the Accuracy of RF model is the highest with 0.9873 Accuracy. Then we choose Random Forests as our final model.
+5. Summarize the previous result
 ```{r,eval=FALSE}
-predict(fit1,testvalid)
+p1<-confusionMatrix(predt1,reference=testing$classe)
+p2<-confusionMatrix(predt2,reference=testing$classe)
+p3<-confusionMatrix(predt3,reference=testing$classe)
+p4<-confusionMatrix(predt4,reference=testing$classe)
+#Retrieve Accuracy Statistics
+p1$overall["Accuracy"]
+p2$overall["Accuracy"]
+p3$overall["Accuracy"]
+p4$overall["Accuracy"]
+```
+
+Accuracy Statistics Summary
+
+Random Forests Model <- 0.9813084 
+
+GBM Model <- 0.9039932 
+
+Trees Model <- 0.4632116
+
+Linear Model <- 0.6965166 
+
+
+By cross-validation, the Accuracy of RF model is the highest with 0.9813 Accuracy. Thus we choose Random Forests as our final model.
+
+6. Make final predictions.
+
+Use the final model to make final predictions on testdata with 20 scenarios.
+```{r,eval=FALSE}
+#As to get our final prediction.
+predict(fit1,testdata)
 ```
 

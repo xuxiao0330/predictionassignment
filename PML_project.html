@@ -69,7 +69,7 @@ img {
 
 <p>In this project, my goal is to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants and predict the manner in which they did the exercise. The data for this project comes from this source: <a href="http://groupware.les.inf.puc-rio.br/har" class="uri">http://groupware.les.inf.puc-rio.br/har</a> More information is available from the website.</p>
 <hr />
-<p>Download data and read in.</p>
+<p>1.Download data and read in.</p>
 <pre class="r"><code># Download and read it in data.
 urltraining&lt;-(&quot;https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv&quot;)
 download.file(urltraining,&quot;training.csv&quot;)
@@ -77,7 +77,8 @@ urltesting&lt;-(&quot;https://d396qusza40orc.cloudfront.net/predmachlearn/pml-te
 download.file(urltesting,&quot;testing.csv&quot;)
 traindata &lt;- read.csv(&quot;training.csv&quot;)
 testdata &lt;- read.csv(&quot;testing.csv&quot;)</code></pre>
-<p>Clean data. In this part, I assume the categories with NAs in test data should not be used to make predictions, and exclude these variables when fitting model with train data. I also exclude X and user_name which I think only as labels, which have nothing to do with model fitting as well.</p>
+<p>2.Clean data.</p>
+<p>In this part, I assume the categories with NAs in test data should not be used to make predictions, and exclude these variables when fitting model with train data. I also exclude X and user_name which I think only as labels, which have nothing to do with model fitting as well.</p>
 <pre class="r"><code>#Clean the testdata and remove NAs.
 testdata&lt;-testdata[,colSums(is.na(testdata))!=nrow(testdata)]
 
@@ -87,13 +88,14 @@ my1 &lt;- names(traindata) %in% n
 traindata &lt;- traindata[my1]
 #Remove X and user_name variable, which I supposed to have nothing to do with prediction.
 traindata &lt;- traindata[c(-1,-2)]</code></pre>
-<p>The new train and test set will only contain 60 valid variables.</p>
-<p>Create data partition for cross-validation, by setting partition level at 0.7.</p>
+<p>The new train and test set will only contain 58 valid variables.</p>
+<p>3.Create data partition for cross-validation, by setting partition level at 0.7.</p>
 <pre class="r"><code>library(caret)
 set.seed(60)
 inTrain &lt;- createDataPartition(traindata$classe, list = FALSE,p=0.7)
 training &lt;- traindata[inTrain,]
 testing &lt;- traindata[-inTrain,]</code></pre>
+<p>4.Model training.</p>
 <p>I will train four model include:Random Forests,GBM, Trees and Linear, using defult 10-fold repeated cv method and pre-processing using center, scale and pca analysis. I will select the highest model with accuracy as my final prediction model.</p>
 <pre class="r"><code>#Train several models to obtain accurary: fit1 Random Forests; fit2 GbM; fit3 Trees; fit4 linear;
 set.seed(61)
@@ -108,7 +110,7 @@ predt3 &lt;- predict(fit3,testing)
 set.seed(64)
 fit4 &lt;- train(classe~., data=training, trControl = trainControl(method=&quot;repeatedcv&quot;) ,preProcess=c(&quot;center&quot;,&quot;scale&quot;,&quot;pca&quot;),method=&quot;lda&quot;)
 predt4 &lt;- predict(fit4,testing)</code></pre>
-<p>Summarize the previous result</p>
+<p>5.Summarize the previous result</p>
 <pre class="r"><code>p1&lt;-confusionMatrix(predt1,reference=testing$classe)
 p2&lt;-confusionMatrix(predt2,reference=testing$classe)
 p3&lt;-confusionMatrix(predt3,reference=testing$classe)
@@ -124,7 +126,7 @@ p4$overall[&quot;Accuracy&quot;]</code></pre>
 <p>Trees Model &lt;- 0.4632116</p>
 <p>Linear Model &lt;- 0.6965166</p>
 <p>By cross-validation, the Accuracy of RF model is the highest with 0.9813 Accuracy. Thus we choose Random Forests as our final model.</p>
-<p>Make final predictions.</p>
+<p>6.Make final predictions.</p>
 <p>Use the final model to make final predictions on testdata with 20 scenarios.</p>
 <pre class="r"><code>#As to get our final prediction.
 predict(fit1,testdata)</code></pre>
